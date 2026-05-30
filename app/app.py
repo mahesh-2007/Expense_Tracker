@@ -12,8 +12,18 @@ from sqlalchemy.orm import Session
 from .database import engine, SessionLocal, Base
 from .schemas import DBProduct 
 from .modules import module as Expense
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 Base.metadata.create_all(bind = engine)
 
 def db_init():
@@ -47,27 +57,6 @@ def add_expense(adding:Expense,db:SessionLocal = Depends(db_init)):
     db.refresh(new_expense)
     return "Expense Added Successfully"
     
-@app.delete("/delete")
-def delete(id :int , db:SessionLocal = Depends(db_init)):
-    dele = db.query(DBProduct).filter(DBProduct.id==id).delete()
-    if  not dele :
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND , detail=f"ID {id} not found")
-    db.commit()
-    return "Deleted Successfully"
-
-@app.put("/update")
-def update(id :int ,adding:Expense, db:SessionLocal = Depends(db_init)):
-    updating = db.query(DBProduct).filter(DBProduct.id==id).update({
-        DBProduct.Amount : adding.Amount,
-        DBProduct.Category : adding.Category,
-        DBProduct.Date : adding.Date,
-        DBProduct.Description : adding.Description
-     })
-    if not updating:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND , detail=f"ID {id} Not Found")
-    db.commit()
-    return "Updated Successfully"
-
 @app.delete("/delete/{id}")
 def delete(id :int , db:SessionLocal = Depends(db_init)):
     dele = db.query(DBProduct).filter(DBProduct.id==id).delete()
