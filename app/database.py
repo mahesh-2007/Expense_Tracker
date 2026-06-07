@@ -5,9 +5,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-url = os.getenv("DATABASE_URL")
-
-engine = create_engine(url)
+url = os.getenv("DATABASE_URL", "sqlite:///./expense.db")
+if url.startswith("sqlite"):
+    engine = create_engine(url, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(url)
 
 class Base(DeclarativeBase):
     pass

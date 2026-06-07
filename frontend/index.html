@@ -18,8 +18,12 @@
         </div>
     </header>
 
+    <!-- Single toggle button placed below main content; label changes based on active page -->
+
     <div class="container">
-        <div class="card form-card">
+        <div id="page-add">
+            <div class="add-grid">
+                <div class="card form-card">
             <h2>Add New Expense</h2>
             <form id="expenseForm">
                 <div class="form-group">
@@ -45,7 +49,23 @@
             <div id="message" class="message hidden"></div>
         </div>
 
-        <div class="card table-card">
+                <div class="card ai-card">
+            <h2>Add expenses using AI</h2>
+            <p class="muted">Type a natural language description and the AI will parse it into an expense.</p>
+            <form id="aiForm">
+                <div class="form-group">
+                    <label for="aiQuery">Describe expense</label>
+                    <textarea id="aiQuery" rows="3" placeholder="e.g. Bought coffee for ₹3 at Starbucks today"></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Parse &amp; Add</button>
+            </form>
+            <div id="aiMessage" class="message hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-view" class="hidden">
+            <div class="card table-card">
             <h2>Recent Transactions</h2>
             <div class="table-container">
                 <table>
@@ -63,7 +83,12 @@
                 </table>
             </div>
         </div>
-    </div>
+        </div>
+
+        <!-- Global page toggle button (visible on both pages) -->
+        <div class="page-toggle-wrap">
+            <button id="pageToggle" class="btn-toggle">View Expenses</button>
+        </div>
 
     <div class="modal-overlay hidden" id="confirmModal">
         <div class="confirm-modal">

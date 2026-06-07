@@ -118,6 +118,61 @@ header h1 {
     backdrop-filter: blur(12px);
 }
 
+/* Add methods layout: two cards side-by-side, equal size and centered */
+.add-grid {
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    align-items: stretch;
+}
+
+.add-grid .card {
+    flex: 1 1 420px;
+    min-width: 280px;
+    max-width: 520px;
+    height: 450px;
+    display: flex;
+    flex-direction: column;
+}
+
+.ai-card .form-group textarea {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border-radius: 0.85rem;
+    border: 1px solid #d1d5db;
+    resize: none;
+}
+
+/* Toggle button area */
+.page-toggle-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 5rem;
+}
+
+.btn-toggle {
+    background: #3730a3;
+    color: #fff;
+    border: none;
+    padding: 0.9rem 1.25rem;
+    border-radius: 999px;
+    font-weight: 800;
+    box-shadow: 0 12px 30px rgba(99,102,241,0.18);
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, opacity .12s ease;
+}
+
+.btn-toggle:hover { transform: translateY(-3px); box-shadow: 0 18px 40px rgba(99,102,241,0.2); }
+
+/* Center the container content and keep consistent width */
+.container { display: flex; flex-direction: column; align-items: center; }
+
+.table-card { width: min(100%, 1100px); }
+
+@media (min-width: 900px) {
+    .container { align-items: center; }
+}
+
 .form-card {
     width: 100%;
     max-width: 100%;
