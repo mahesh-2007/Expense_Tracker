@@ -30,7 +30,11 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://your-github-username.github.io"], # Put your actual frontend URL here
+    allow_origins=[
+        "https://mahesh-2007.github.io", # Your live GitHub Pages URL
+        "http://127.0.0.1:8000",         # For local testing
+        "http://localhost:8000"          # For local testing
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
