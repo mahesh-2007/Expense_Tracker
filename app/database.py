@@ -12,8 +12,7 @@ if url.startswith("sqlite"):
 else:
     engine = create_engine(
         url, 
-        pool_pre_ping=True,
-        connect_args={"ssl": {"ssl_mode": "REQUIRED"}}
+        pool_pre_ping=True
     )
 
 class Base(DeclarativeBase):
