@@ -31,7 +31,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -112,6 +112,7 @@ def ai_expense(payload: AIRequest, db:SessionLocal = Depends(db_init)):
             Date=response.Date or date.today())
         db.add(new_expense)
         db.commit()
+        db.refresh(new_expense)
         return {"message": "Expense Added Successfully via AI"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

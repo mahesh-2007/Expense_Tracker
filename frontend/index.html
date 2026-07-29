@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Dashboard</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="cash-flow.png">
 </head>
 <body>
 
@@ -17,6 +18,8 @@
             </div>
         </div>
     </header>
+
+    <div id="globalMessage" class="message hidden"></div>
 
     <!-- Single toggle button placed below main content; label changes based on active page -->
 
@@ -57,7 +60,7 @@
                     <label for="aiQuery">Describe expense</label>
                     <textarea id="aiQuery" rows="3" placeholder="e.g. Bought coffee for ₹3 at Starbucks today"></textarea>
                 </div>
-                <button type="submit" class="btn-submit">Parse &amp; Add</button>
+                <button type="submit" class="btn-submit">Add Expense</button>
             </form>
             <div id="aiMessage" class="message hidden"></div>
                 </div>
@@ -65,6 +68,40 @@
         </div>
 
         <div id="page-view" class="hidden">
+            <div class="summary-grid">
+                <div class="stat-card">
+                    <p class="stat-label">Total expense</p>
+                    <p class="stat-value" id="totalExpense">₹0</p>
+                    <p class="stat-meta" id="totalRecords">0 records</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">Today expense</p>
+                    <p class="stat-value" id="todayExpense">₹0</p>
+                    <p class="stat-meta" id="todayDate">Today</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">Highest expense</p>
+                    <p class="stat-value" id="highestExpense">₹0</p>
+                    <p class="stat-meta" id="highestExpenseLabel">No expense selected</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">Busiest day</p>
+                    <p class="stat-value" id="highestDate">—</p>
+                    <p class="stat-meta" id="highestDateTotal">₹0 total</p>
+                </div>
+                <div class="stat-card category-card">
+                    <p class="stat-label">Category summary</p>
+                    <p class="stat-value" id="categorySummary">₹0</p>
+                    <p class="stat-meta" id="categorySummaryLabel">Expense by category</p>
+                </div>
+            </div>
+            <div class="card chart-card">
+                <h2>Category breakdown</h2>
+                <div class="chart-container">
+                    <canvas id="categoryPieChart" width="480" height="320"></canvas>
+                    <div class="chart-legend" id="categoryLegend"></div>
+                </div>
+            </div>
             <div class="card table-card">
             <h2>Recent Transactions</h2>
             <div class="table-container">

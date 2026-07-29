@@ -7,5 +7,5 @@ class DBProduct(Base):
     id = Column(Integer,  primary_key=True, index=True)
     Amount = Column(Float,nullable=False)
     Date = Column(Date)
-    Category = Column(String(20),nullable=False)
+    Category = Column(String(50),nullable=False)
     Description = Column(String(200))

@@ -17,6 +17,58 @@ async function fetchExpenses() {
         }
 
         const expenses = await response.json();
+        const today = new Date().toISOString().split('T')[0];
+        const total = expenses.reduce((sum, expense) => sum + Number(expense.Amount || 0), 0);
+        const todayTotal = expenses
+            .filter(expense => expense.Date === today)
+            .reduce((sum, expense) => sum + Number(expense.Amount || 0), 0);
+        const totalRecords = expenses.length;
+        const highestExpense = expenses.reduce((best, expense) => {
+            const amount = Number(expense.Amount || 0);
+            return amount > Number(best.Amount || 0) ? expense : best;
+        }, { Amount: 0, Description: 'No expenses yet' });
+
+        const dateTotals = expenses.reduce((acc, expense) => {
+            const date = expense.Date || 'Unknown';
+            acc[date] = (acc[date] || 0) + Number(expense.Amount || 0);
+            return acc;
+        }, {});
+        const dateEntries = Object.entries(dateTotals);
+        const [busiestDate, busiestTotal] = dateEntries.sort(([, a], [, b]) => b - a)[0] || ['—', 0];
+
+        const categoryTotals = expenses.reduce((acc, expense) => {
+            const category = expense.Category || 'Other';
+            acc[category] = (acc[category] || 0) + Number(expense.Amount || 0);
+            return acc;
+        }, {});
+        const categoryEntries = Object.entries(categoryTotals)
+            .sort(([, a], [, b]) => b - a);
+        const topCategory = categoryEntries[0] || ['No category', 0];
+
+        const totalExpenseEl = getElement('totalExpense');
+        const totalRecordsEl = getElement('totalRecords');
+        const todayExpenseEl = getElement('todayExpense');
+        const todayDateEl = getElement('todayDate');
+        const highestExpenseEl = getElement('highestExpense');
+        const highestExpenseLabelEl = getElement('highestExpenseLabel');
+        const highestDateEl = getElement('highestDate');
+        const highestDateTotalEl = getElement('highestDateTotal');
+        const categorySummaryEl = getElement('categorySummary');
+        const categorySummaryLabelEl = getElement('categorySummaryLabel');
+
+        if (totalExpenseEl) totalExpenseEl.textContent = `₹${total.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+        if (totalRecordsEl) totalRecordsEl.textContent = `${totalRecords} records`;
+        if (todayExpenseEl) todayExpenseEl.textContent = `₹${todayTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+        if (todayDateEl) todayDateEl.textContent = `Today • ${today}`;
+        if (highestExpenseEl) highestExpenseEl.textContent = `₹${Number(highestExpense.Amount || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+        if (highestExpenseLabelEl) highestExpenseLabelEl.textContent = `${highestExpense.Description || 'No description'}`;
+        if (highestDateEl) highestDateEl.textContent = busiestDate;
+        if (highestDateTotalEl) highestDateTotalEl.textContent = `₹${Number(busiestTotal || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} total`;
+        if (categorySummaryEl) categorySummaryEl.textContent = `₹${Number(topCategory[1] || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+        if (categorySummaryLabelEl) categorySummaryLabelEl.textContent = topCategory[0] !== 'No category' ? `Top category: ${topCategory[0]}` : 'No categories';
+
+        renderCategoryPieChart('categoryPieChart', 'categoryLegend', categoryEntries);
+
         expenses.forEach(expense => {
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -104,8 +156,59 @@ async function confirmDelete() {
     }
 }
 
+function renderCategoryPieChart(canvasId, legendId, categoryEntries) {
+    const canvas = getElement(canvasId);
+    const legend = getElement(legendId);
+    if (!canvas || !legend || !canvas.getContext) return;
+
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const radius = Math.min(width, height) * 0.35;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const colors = ['#4f46e5', '#8b5cf6', '#a855f7', '#f97316', '#10b981', '#22c55e', '#0ea5e9', '#facc15', '#fb7185', '#f43f5e'];
+    const total = categoryEntries.reduce((sum, [, amount]) => sum + amount, 0);
+
+    ctx.clearRect(0, 0, width, height);
+    legend.innerHTML = '';
+
+    if (total === 0) {
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.fill();
+        const message = document.createElement('p');
+        message.textContent = 'No category data yet.';
+        message.className = 'legend-empty';
+        legend.appendChild(message);
+        return;
+    }
+
+    let startAngle = -Math.PI / 2;
+    categoryEntries.forEach(([category, amount], index) => {
+        const sliceAngle = (amount / total) * Math.PI * 2;
+        ctx.fillStyle = colors[index % colors.length];
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+        ctx.closePath();
+        ctx.fill();
+
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `
+            <span class="legend-swatch" style="background:${ctx.fillStyle}"></span>
+            <span>${category}</span>
+            <span class="legend-value">₹${Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+        `;
+        legend.appendChild(item);
+        startAngle += sliceAngle;
+    });
+}
+
 function showMessage(text, typeClass) {
-    const message = getElement('message');
+    const message = getElement('globalMessage');
     if (!message) return;
     message.textContent = text;
     message.className = `message ${typeClass}`;
@@ -175,6 +278,10 @@ async function parseAIExpense(event) {
         aiMessage.className = 'message msg-success';
         getElement('aiForm').reset();
         fetchExpenses();
+        setTimeout(() => {
+            aiMessage.className = 'message hidden';
+            aiMessage.textContent = '';
+        }, 3000);
     } catch (error) {
         console.error('parseAIExpense:', error);
         aiMessage.textContent = error.message || 'Network error';
