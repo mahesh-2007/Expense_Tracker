@@ -61,7 +61,17 @@ def home():
 @app.get("/Show-All")
 def show_expense(db:SessionLocal = Depends(db_init)):
     db_show = db.query(DBProduct).filter().all()
-    return db_show
+    seen = set()
+    unique_expenses = []
+
+    for expense in db_show:
+        key = (expense.Date, (expense.Description or '').strip().lower(), (expense.Category or '').strip(), float(expense.Amount))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique_expenses.append(expense)
+
+    return unique_expenses
 
 @app.post("/ai/parse-expense")
 def ai_expense(payload: AIRequest, db:SessionLocal = Depends(db_init)):
@@ -109,11 +119,22 @@ def ai_expense(payload: AIRequest, db:SessionLocal = Depends(db_init)):
                     max_retries=2,
                 )
         
+        expense_date = response.Date or date.today()
+        existing_expense = db.query(DBProduct).filter(
+            DBProduct.Amount == response.Amount,
+            DBProduct.Category == response.Category,
+            DBProduct.Description == response.Description,
+            DBProduct.Date == expense_date
+        ).first()
+
+        if existing_expense:
+            return {"message": "Expense already exists"}
+
         new_expense = DBProduct(
             Amount=response.Amount,
             Category=response.Category,
             Description=response.Description,
-            Date=response.Date or date.today())
+            Date=expense_date)
         db.add(new_expense)
         db.commit()
         db.refresh(new_expense)
@@ -127,11 +148,23 @@ def ai_expense(payload: AIRequest, db:SessionLocal = Depends(db_init)):
 def add_expense(adding:Expense,db:SessionLocal = Depends(db_init)):
     if adding.Amount < 0 :
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST , detail="Transfer amount cannot be negative.") 
+
+    expense_date = adding.Date or date.today()
+    existing_expense = db.query(DBProduct).filter(
+        DBProduct.Amount == adding.Amount,
+        DBProduct.Category == adding.Category,
+        DBProduct.Description == adding.Description,
+        DBProduct.Date == expense_date
+    ).first()
+
+    if existing_expense:
+        return {"message": "Expense already exists"}
+
     new_expense = DBProduct(
         Amount=adding.Amount,
         Category=adding.Category,
         Description=adding.Description,
-        Date=adding.Date or date.today())
+        Date=expense_date)
     db.add(new_expense)
     db.commit()
     db.refresh(new_expense)

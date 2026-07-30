@@ -17,18 +17,33 @@ async function fetchExpenses() {
         }
 
         const expenses = await response.json();
+        const uniqueExpenses = [];
+        const seenExpenseKeys = new Set();
+
+        expenses.forEach(expense => {
+            const normalizedDate = expense.Date || '';
+            const normalizedDescription = (expense.Description || '').trim().toLowerCase();
+            const normalizedCategory = (expense.Category || '').trim();
+            const normalizedAmount = Number(expense.Amount || 0);
+            const key = `${normalizedDate}::${normalizedDescription}::${normalizedCategory}::${normalizedAmount}`;
+
+            if (seenExpenseKeys.has(key)) return;
+            seenExpenseKeys.add(key);
+            uniqueExpenses.push(expense);
+        });
+
         const today = new Date().toISOString().split('T')[0];
-        const total = expenses.reduce((sum, expense) => sum + Number(expense.Amount || 0), 0);
-        const todayTotal = expenses
+        const total = uniqueExpenses.reduce((sum, expense) => sum + Number(expense.Amount || 0), 0);
+        const todayTotal = uniqueExpenses
             .filter(expense => expense.Date === today)
             .reduce((sum, expense) => sum + Number(expense.Amount || 0), 0);
-        const totalRecords = expenses.length;
-        const highestExpense = expenses.reduce((best, expense) => {
+        const totalRecords = uniqueExpenses.length;
+        const highestExpense = uniqueExpenses.reduce((best, expense) => {
             const amount = Number(expense.Amount || 0);
             return amount > Number(best.Amount || 0) ? expense : best;
         }, { Amount: 0, Description: 'No expenses yet' });
 
-        const dateTotals = expenses.reduce((acc, expense) => {
+        const dateTotals = uniqueExpenses.reduce((acc, expense) => {
             const date = expense.Date || 'Unknown';
             acc[date] = (acc[date] || 0) + Number(expense.Amount || 0);
             return acc;
@@ -36,7 +51,7 @@ async function fetchExpenses() {
         const dateEntries = Object.entries(dateTotals);
         const [busiestDate, busiestTotal] = dateEntries.sort(([, a], [, b]) => b - a)[0] || ['—', 0];
 
-        const categoryTotals = expenses.reduce((acc, expense) => {
+        const categoryTotals = uniqueExpenses.reduce((acc, expense) => {
             const category = expense.Category || 'Other';
             acc[category] = (acc[category] || 0) + Number(expense.Amount || 0);
             return acc;
@@ -69,7 +84,7 @@ async function fetchExpenses() {
 
         renderCategoryPieChart('categoryPieChart', 'categoryLegend', categoryEntries);
 
-        expenses.forEach(expense => {
+        uniqueExpenses.forEach(expense => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td style="color: #4b5563;">${expense.Date || ''}</td>
@@ -162,15 +177,26 @@ function renderCategoryPieChart(canvasId, legendId, categoryEntries) {
     if (!canvas || !legend || !canvas.getContext) return;
 
     const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.clientWidth || 320;
+    const height = canvas.clientHeight || 320;
+
+    if (!width || !height) return;
+
+    if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+    }
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
     const radius = Math.min(width, height) * 0.35;
     const centerX = width / 2;
     const centerY = height / 2;
     const colors = ['#4f46e5', '#8b5cf6', '#a855f7', '#f97316', '#10b981', '#22c55e', '#0ea5e9', '#facc15', '#fb7185', '#f43f5e'];
     const total = categoryEntries.reduce((sum, [, amount]) => sum + amount, 0);
 
-    ctx.clearRect(0, 0, width, height);
     legend.innerHTML = '';
 
     if (total === 0) {
